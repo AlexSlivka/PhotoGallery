@@ -1,5 +1,6 @@
 package com.example.photogallery
 
+import android.content.Context
 import android.graphics.drawable.BitmapDrawable
 import android.graphics.drawable.ColorDrawable
 import android.graphics.drawable.Drawable
@@ -8,16 +9,17 @@ import android.os.Handler
 import android.util.Log
 import android.view.*
 import android.widget.ImageView
-import android.widget.TextView
 import androidx.appcompat.widget.SearchView
 import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
-import androidx.lifecycle.LiveData
 import androidx.lifecycle.Observer
 import androidx.lifecycle.ViewModelProvider
 import androidx.recyclerview.widget.GridLayoutManager
 import androidx.recyclerview.widget.RecyclerView
-import com.example.photogallery.api.FlickrFetchr
+import androidx.work.Constraints
+import androidx.work.NetworkType
+import androidx.work.OneTimeWorkRequest
+import androidx.work.WorkManager
 
 private const val TAG = "PhotoGalleryFragment"
 
@@ -39,6 +41,19 @@ class PhotoGalleryFragment : Fragment() {
             photoHolder.bindDrawable(drawable)
         }
         lifecycle.addObserver(thumbnailDownloader.fragmentLifecycleObserver)
+
+        val constraints = Constraints.Builder()
+            .setRequiredNetworkType(NetworkType.UNMETERED)
+            .build()
+
+        val workRequest = OneTimeWorkRequest
+            .Builder(PollWorker::class.java)
+            .setConstraints(constraints)
+            .build()
+
+        val context: Context = (activity?.applicationContext) as Context
+        WorkManager.getInstance(context)
+            .enqueue(workRequest)
     }
 
     override fun onCreateView(
